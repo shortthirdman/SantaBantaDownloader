@@ -1,3 +1,7 @@
+# SantaBanta Bulk Downloader
+
+![GitHub issues](https://img.shields.io/github/issues/shortthirdman/SantaBantaDownloader)  ![GitHub](https://img.shields.io/github/license/shortthirdman/SantaBantaDownloader)  ![GitHub Pipenv locked Python version](https://img.shields.io/github/pipenv/locked/python-version/shortthirdman/SantaBantaDownloader)
+
 ## Prerequisites
 
  * Python 3.8
