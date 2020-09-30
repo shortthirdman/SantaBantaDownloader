@@ -1,0 +1,15 @@
+Flask==1.1.2
+future==0.18.2
+gunicorn==20.0.4
+requests==2.20.0
+cryptography==3.0
+tqdm==4.48.2
+pylint===1.6.5
+itsdangerous==1.1.0
+Jinja2==2.11.2
+MarkupSafe==1.1.1
+Werkzeug==1.0.1
+click==7.1.2
+pcloud==1.0a8
+boxsdk==2.9.0
+kloudless==2.0.0
