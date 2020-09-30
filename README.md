@@ -5,9 +5,12 @@
 ![GitHub Pipenv locked Python version](https://img.shields.io/github/pipenv/locked/python-version/shortthirdman/SantaBantaDownloader)
 ![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/shortthirdman/SantaBantaDownloader)
 
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/b94ba5aec0514b4f853416e0164a3b6a)](https://www.codacy.com/gh/shortthirdman/SantaBantaDownloader/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=shortthirdman/SantaBantaDownloader&amp;utm_campaign=Badge_Grade)
+
 ## Prerequisites
 
  * Python 3.8
+ * Microsoft VS Code/PyCharm/Anaconda
 
 ## Installation
 
