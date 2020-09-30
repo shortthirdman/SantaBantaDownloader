@@ -1,6 +1,9 @@
 # SantaBanta Bulk Downloader
 
-![GitHub issues](https://img.shields.io/github/issues/shortthirdman/SantaBantaDownloader)  ![GitHub](https://img.shields.io/github/license/shortthirdman/SantaBantaDownloader)  ![GitHub Pipenv locked Python version](https://img.shields.io/github/pipenv/locked/python-version/shortthirdman/SantaBantaDownloader)
+![GitHub issues](https://img.shields.io/github/issues/shortthirdman/SantaBantaDownloader)
+![GitHub](https://img.shields.io/github/license/shortthirdman/SantaBantaDownloader)
+![GitHub Pipenv locked Python version](https://img.shields.io/github/pipenv/locked/python-version/shortthirdman/SantaBantaDownloader)
+![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/shortthirdman/SantaBantaDownloader)
 
 ## Prerequisites
 
