@@ -48,6 +48,8 @@ flask run
 
 * [Compress and Decompress Files](https://www.thepythoncode.com/article/compress-decompress-files-tarfile-python)
 
+* [Upload folders from local system to FTP using Python](https://stackoverflow.com/questions/5663787/upload-folders-from-local-system-to-ftp-using-python-script)
+
 * [Python gzip.GzipFile() Examples](https://www.programcreek.com/python/example/252/gzip.GzipFile)
 
 * [Rendering Pages in Flask Using Jinja](https://hackersandslackers.com/flask-jinja-templates/)

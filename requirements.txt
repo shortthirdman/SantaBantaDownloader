@@ -13,3 +13,4 @@ click==7.1.2
 pcloud==1.0a8
 boxsdk==2.9.0
 kloudless==2.0.0
+ftputil==4.0.0

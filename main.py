@@ -1,27 +1,52 @@
 """ TODO """
-import os, tarfile, urllib.parse, requests
-from zipfile import ZipFile
+import os, urllib.parse, requests, ftplib, logging, ftputil
 from flask import Flask, request, send_file, jsonify, render_template
 from downloader.utility import check_file, extract_file_number, get_file_name, get_all_file_paths
 
+logging.basicConfig(level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',datefmt='%d-%b-%y %H:%M:%S')
+logger = logging.getLogger()
+
 app = Flask(__name__)
 
-@app.route('/')
-def home():
-    """Landing page."""
-    return render_template('home.html', title="SantaBanta Bulk Downloader")
+ftp_port = 990 # os.environ.get('BOX_FTP_PORT')
+ftp_server = 'ftp.box.com' # os.environ.get('BOX_FTP_SERVER')
+ftp_username = 'swetank.mohanty@outlook.com' # os.environ.get('BOX_FTP_USERNAME')
+ftp_password = 'smm1993@Official' # os.environ.get('BOX_FTP_PASSWORD')
 
-@app.route('/process', methods=['GET'])
-def process_images():
-    """ TODO """
-    return downloader(request.args.get('img_url'))
+def upload_directory(local_dir, ftp_dir):
+    file_list = os.listdir(local_dir)
+    try:
+        with ftputil.FTPHost(ftp_server, ftp_username, ftp_password) as ftp_host:
+            for fname in file_list:
+                if os.path.isdir(local_dir + fname):             
+                    if(ftp_host.path.exists(ftp_dir + fname) != True):                   
+                        ftp_host.mkdir(ftp_dir + fname)
+                        logger.info("{0}{1} is created.".format(ftp_dir, fname))
+                    upload_directory(local_dir + fname + "/", ftp_dir + fname + "/")
+                else:               
+                    if (ftp_host.upload_if_newer(local_dir + fname, ftp_dir + fname)):
+                        logger.info("{0}{1} is uploaded.".format(ftp_dir, fname))
+                    else:
+                        logger.info("{0}{1} has already been uploaded.".format(local_dir, fname))
+    except (Exception, OSError, ftplib.error_reply, ftplib.error_temp, ftplib.error_perm) as e:
+        logger.exception(e)
+
+def post_to_ftp(file_paths,dir_name):
+    """ Upload directory to Box Drive using FTP """
+    try:
+        with ftplib.FTP_TLS(ftp_server) as ftps:
+            ftps.login(user=ftp_username, passwd=ftp_password)
+            ftps.set_debuglevel(1)
+            ftps.set_pasv(True)
+            ftps.dir()
+            logger.info("{0}".format(ftps.getwelcome()))
+    except (ftplib.error_reply, ftplib.error_temp, ftplib.error_perm) as e:
+        logger.exception(e)
 
 def downloader(file_url):
-    """ TODO """
+    """ Process bulk download """
     file_url = str(file_url)
     dir_name = urllib.parse.unquote(file_url.split('/')[5])
-    zip_name = '.'.join([dir_name, 'zip'])
-    # tar_name = '.'.join([dir_name, 'tar', 'gz'])
 
     try:
         if not os.path.exists(dir_name):
@@ -41,32 +66,21 @@ def downloader(file_url):
                 image.write(file_object.content)
 
         file_paths = get_all_file_paths(dir_name)
-        # result = upload_files(file_paths, dir_name)
+        upload_directory(dir_name, dir_name)
         result = "Success"
-        return jsonify(message=result)
+        return result
     except Exception:
         pass
 
-def archive_directory(dir_name, zip_name):
-    """Returns the compressed folder for the `dir_name` in zip format"""
-    file_paths = get_all_file_paths(dir_name)
-    # create a ZipFile object
-    with ZipFile(zip_name, 'w') as z_file:
-        # Iterate over all the files in directory
-        for file in file_paths:
-            z_file.write(file)
+@app.route('/')
+def home():
+    """Landing page."""
+    return render_template('home.html', title="SantaBanta Bulk Downloader")
 
-def create_tarfile(outfile, dir_name):
-    """Returns the compressed folder for the `dir_name` in tar format"""
-    file_paths = get_all_file_paths(dir_name)
-    try:
-        with tarfile.open(outfile, mode="w:gz", compresslevel=9) as tar:
-            for infile in file_paths:
-                tar.add(infile, arcname=infile.rsplit(os.path.sep, 1)[1])
-    except tarfile.CompressionError as c_ex:
-        raise c_ex
-    except tarfile.TarError as t_ex:
-        raise t_ex
+@app.route('/process', methods=['GET'])
+def process_images():
+    """ TODO """
+    return downloader(request.args.get('img_url'))
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=False, ssl_context='adhoc')
