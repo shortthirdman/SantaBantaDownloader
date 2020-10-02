@@ -8,10 +8,10 @@ logger = logging.getLogger()
 
 app = Flask(__name__)
 
-ftp_port = 990 # os.environ.get('BOX_FTP_PORT')
-ftp_server = 'ftp.box.com' # os.environ.get('BOX_FTP_SERVER')
-ftp_username = 'swetank.mohanty@outlook.com' # os.environ.get('BOX_FTP_USERNAME')
-ftp_password = 'smm1993@Official' # os.environ.get('BOX_FTP_PASSWORD')
+ftp_port = os.environ.get('BOX_FTP_PORT')
+ftp_server = os.environ.get('BOX_FTP_SERVER')
+ftp_username = os.environ.get('BOX_FTP_USERNAME')
+ftp_password = os.environ.get('BOX_FTP_PASSWORD')
 
 def upload_directory(local_dir, ftp_dir):
     file_list = os.listdir(local_dir)

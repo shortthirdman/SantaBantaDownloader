@@ -63,8 +63,8 @@ class KloudlessAPI():
         return calendar.data
 
 if __name__ == "__main__":
-    app_id = '2-ic_GbvPyLc2l5DRcbSxBJykAwcRvNR13f5_qO0mv9w4sy-' # os.environ.get('KLOUDLESS_APP_ID')
-    bearer_token = 'pv29UbCG6IYZrfFUktqds4TTqY65Ty' # os.environ.get('KLOUDLESS_BEARER_TOKEN')
+    app_id = os.environ.get('KLOUDLESS_APP_ID')
+    bearer_token = os.environ.get('KLOUDLESS_BEARER_TOKEN')
     client = KloudlessAPI()
     verified = client.verify_bearer_token(bearer_token, app_id)
     if verified == True:
