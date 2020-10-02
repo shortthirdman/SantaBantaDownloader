@@ -24,6 +24,7 @@ python -B main.py
 
 ```powershell
 [Environment]::SetEnvironmentVariable("PYTHONDONTWRITEBYTECODE", "1", "Machine")
+[Environment]::SetEnvironmentVariable("PIPENV_VENV_IN_PROJECT", "1", "Machine")
 
 $env:FLASK_APP = "main"
 
