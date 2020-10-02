@@ -1,9 +1,9 @@
 """ TODO """
-import os, urllib.parse, requests, ftplib, logging, ftputil
+import os, urllib.parse, requests, ftplib, logging
 from flask import Flask, request, send_file, jsonify, render_template
-from downloader.utility import check_file, extract_file_number, get_file_name, get_all_file_paths
+import downloader
 
-logging.basicConfig(level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',datefmt='%d-%b-%y %H:%M:%S')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger()
 
 app = Flask(__name__)
@@ -13,35 +13,41 @@ ftp_server = os.environ.get('BOX_FTP_SERVER')
 ftp_username = os.environ.get('BOX_FTP_USERNAME')
 ftp_password = os.environ.get('BOX_FTP_PASSWORD')
 
-def upload_directory(local_dir, ftp_dir):
-    file_list = os.listdir(local_dir)
-    try:
-        with ftputil.FTPHost(ftp_server, ftp_username, ftp_password) as ftp_host:
-            for fname in file_list:
-                if os.path.isdir(local_dir + fname):             
-                    if(ftp_host.path.exists(ftp_dir + fname) != True):                   
-                        ftp_host.mkdir(ftp_dir + fname)
-                        logger.info("{0}{1} is created.".format(ftp_dir, fname))
-                    upload_directory(local_dir + fname + "/", ftp_dir + fname + "/")
-                else:               
-                    if (ftp_host.upload_if_newer(local_dir + fname, ftp_dir + fname)):
-                        logger.info("{0}{1} is uploaded.".format(ftp_dir, fname))
-                    else:
-                        logger.info("{0}{1} has already been uploaded.".format(local_dir, fname))
-    except (Exception, OSError, ftplib.error_reply, ftplib.error_temp, ftplib.error_perm) as e:
-        logger.exception(e)
-
-def post_to_ftp(file_paths,dir_name):
+def post_to_ftp(local_dir_name):
     """ Upload directory to Box Drive using FTP """
+    remote_dir_name = local_dir_name
     try:
-        with ftplib.FTP_TLS(ftp_server) as ftps:
+        with ftplib.FTP(ftp_server) as ftps:
+            ftps.port = ftp_port
             ftps.login(user=ftp_username, passwd=ftp_password)
-            ftps.set_debuglevel(1)
-            ftps.set_pasv(True)
-            ftps.dir()
-            logger.info("{0}".format(ftps.getwelcome()))
+
+            ftps.cwd('Wallpapers')
+            dir_path = ''
+
+            if remote_dir_name not in ftps.nlst():
+                dir_path = ftps.mkd(remote_dir_name)
+                logger.info("Directory created successfully at {0}.".format(dir_path))
+            else:
+                logger.info("Directory already exists.")
+
+            ftps.cwd(remote_dir_name)
+            logger.info("Current directory location: {0}".format(ftps.pwd()))
+
+            file_paths = downloader.utility.get_all_file_paths(local_dir_name)
+
+            for afile in file_paths:
+                temp_contents = str(afile).rsplit(os.path.sep)
+                temp_file = temp_contents[1]
+                with open(afile, 'rb') as fr:
+                    ftps.storbinary('STOR ' + temp_file, fr)
+                    logger.info("{0} uploaded to remote directory.".format(temp_file))
+        ftps.quit()
+        result_status = "All files for {0} were uploaded successfully.".format(local_dir_name)
     except (ftplib.error_reply, ftplib.error_temp, ftplib.error_perm) as e:
-        logger.exception(e)
+        logger.exception(str(e))
+        result_status = str(e)
+
+    return result_status
 
 def downloader(file_url):
     """ Process bulk download """
@@ -52,11 +58,11 @@ def downloader(file_url):
         if not os.path.exists(dir_name):
             os.mkdir(dir_name)
 
-        file_num = extract_file_number(get_file_name(file_url))
+        file_num = downloader.utility.extract_file_number(downloader.utility.get_file_name(file_url))
         for i in range(int(file_num), -1, -1):
             web_url = file_url[0:(file_url.rindex('-') + 1)] + str(i) + 'a.jpg'
 
-            if not check_file(web_url):
+            if not downloader.utility.check_file(web_url):
                 web_url = file_url[0:(file_url.rindex('-') + 1)] + str(i) + 'v.jpg'
 
             file_object = requests.get(web_url, allow_redirects=True)
@@ -65,13 +71,12 @@ def downloader(file_url):
             with open(download_location, 'wb') as image:
                 image.write(file_object.content)
 
-        file_paths = get_all_file_paths(dir_name)
-        upload_directory(dir_name, dir_name)
-        result = "Success"
-        return result
+        file_paths = downloader.utility.get_all_file_paths(dir_name)
+        task_status = post_to_ftp(dir_name)
     except (Exception) as ex:
-        return "Some error occurred. Please try again after sometime."
+        task_status = "Some error occurred. Please try again after sometime."
         logger.error(ex)
+    return task_status
 
 @app.route('/')
 def home():
