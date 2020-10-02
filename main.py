@@ -69,8 +69,9 @@ def downloader(file_url):
         upload_directory(dir_name, dir_name)
         result = "Success"
         return result
-    except Exception:
-        pass
+    except (Exception) as ex:
+        return "Some error occurred. Please try again after sometime."
+        logger.error(ex)
 
 @app.route('/')
 def home():
@@ -80,7 +81,8 @@ def home():
 @app.route('/process', methods=['GET'])
 def process_images():
     """ TODO """
-    return downloader(request.args.get('img_url'))
+    result = downloader(request.args.get('img_url'))
+    return render_template('home.html', title="SantaBanta Bulk Downloader", message=result)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=False, ssl_context='adhoc')
