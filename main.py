@@ -1,5 +1,5 @@
 """ TODO """
-import os, urllib.parse, requests, ftplib, logging
+import os, urllib.parse, requests, ftplib, logging, time, threading, shutil
 from flask import Flask, request, send_file, jsonify, render_template
 import downloader
 
@@ -12,6 +12,9 @@ ftp_port = os.environ.get('BOX_FTP_PORT')
 ftp_server = os.environ.get('BOX_FTP_SERVER')
 ftp_username = os.environ.get('BOX_FTP_USERNAME')
 ftp_password = os.environ.get('BOX_FTP_PASSWORD')
+
+result = None
+result_available = threading.Event()
 
 def post_to_ftp(local_dir_name):
     """ Upload directory to Box Drive using FTP """
@@ -42,14 +45,18 @@ def post_to_ftp(local_dir_name):
                     ftps.storbinary('STOR ' + temp_file, fr)
                     logger.info("{0} uploaded to remote directory.".format(temp_file))
         ftps.quit()
-        result_status = "All files for {0} were uploaded successfully.".format(local_dir_name)
+
+        global result
+        result = "All files for {0} were uploaded successfully.".format(local_dir_name)
+        shutil.rmtree(os.path.join(os.getcwd(), local_dir_name))
+
     except (ftplib.error_reply, ftplib.error_temp, ftplib.error_perm) as e:
         logger.exception(str(e))
-        result_status = str(e)
+        pass
 
-    return result_status
+    result_available.set()
 
-def downloader(file_url):
+def process_download(file_url):
     """ Process bulk download """
     file_url = str(file_url)
     dir_name = urllib.parse.unquote(file_url.split('/')[5])
@@ -72,11 +79,15 @@ def downloader(file_url):
                 image.write(file_object.content)
 
         file_paths = downloader.utility.get_all_file_paths(dir_name)
-        task_status = post_to_ftp(dir_name)
+        post_to_ftp(dir_name)
+
+        global result
+        result_available.wait()
+
     except (Exception) as ex:
-        task_status = "Some error occurred. Please try again after sometime."
         logger.error(ex)
-    return task_status
+        pass
+    return result
 
 @app.route('/')
 def home():
@@ -86,7 +97,14 @@ def home():
 @app.route('/process', methods=['GET'])
 def process_images():
     """ TODO """
-    result = downloader(request.args.get('img_url'))
+    thread = threading.Thread(target=background_calculation)
+    thread.start()
+
+    result = process_download(request.args.get('img_url'))
+    thread.join()
+    
+    result_available.wait()
+
     return render_template('home.html', title="SantaBanta Bulk Downloader", message=result)
 
 if __name__ == "__main__":
